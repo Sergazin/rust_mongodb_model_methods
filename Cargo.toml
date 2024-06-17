@@ -1,7 +1,7 @@
 [package]
 name = "rust_mongodb_model_methods"
 description = "Rust MongoDB Model Methods"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
@@ -14,5 +14,5 @@ uuid = {version="1.8.0",features=["serde"], optional=true}
 
 [features]
 default = ["oid_as_id"]
-oid_as_id = ["bson/objectid"]
+oid_as_id = []
 uuid_as_id = ["dep:uuid"]
