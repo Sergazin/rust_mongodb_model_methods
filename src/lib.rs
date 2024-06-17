@@ -16,9 +16,9 @@ pub enum Error {
     NotFound,
     DBError(mongodb::error::Error),
     BSONSerError(bson::ser::Error),
-    CreateFailed,
-    UpdateFailed,
-    DeleteFailed,
+    CreateFailed(String),
+    UpdateFailed(String),
+    DeleteFailed(String),
 }
 
 #[async_trait::async_trait]
@@ -93,13 +93,13 @@ where
         let some_id = insert_result.inserted_id.as_object_id();
         #[cfg(feature = "uuid_as_id")]
         let some_id: Option<uuid::Uuid> = match insert_result.inserted_id.as_str() {
-            Some(id) => Some(uuid::Uuid::parse_str(id).map_err(|_| Error::CreateFailed)?),
+            Some(id) => Some(uuid::Uuid::parse_str(id).map_err(|_| Error::CreateFailed("Invalid UUID".to_string()))?),
             None => None,
         };
 
         match some_id {
             Some(id) => Ok(Self::find_by_id_strict(&id).await?),
-            None => Err(Error::CreateFailed.into()),
+            None => Err(Error::CreateFailed("No ID returned".to_string()).into()),
         }
     }
 
@@ -115,7 +115,7 @@ where
             .map_err(|x| (Error::DBError(x)))?;
 
         if update_result.modified_count != 1 {
-            return Err(Error::UpdateFailed.into());
+            return Err(Error::UpdateFailed("No record updated".to_string()).into());
         };
 
         Self::find_one_strict(filter).await
@@ -138,7 +138,7 @@ where
         let delete_result = collection.delete_one(filter, None).await.map_err(|x| (Error::DBError(x)))?;
 
         if delete_result.deleted_count != 1 {
-            return Err(Error::DeleteFailed.into());
+            return Err(Error::DeleteFailed("No record deleted".to_string()).into());
         };
 
         Ok(())
