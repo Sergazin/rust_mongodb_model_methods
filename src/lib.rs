@@ -11,6 +11,7 @@
 
 use futures::TryStreamExt;
 
+#[derive(Debug)]
 pub enum Error {
     NotFound,
     DBError(mongodb::error::Error),
