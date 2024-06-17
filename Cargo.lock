@@ -131,6 +131,7 @@ dependencies = [
  "ahash",
  "base64 0.13.1",
  "bitvec",
+ "chrono",
  "hex",
  "indexmap",
  "js-sys",
@@ -1060,13 +1061,14 @@ dependencies = [
 
 [[package]]
 name = "rust_mongodb_model_methods"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "bson",
  "futures",
  "mongodb",
  "serde",
+ "uuid",
 ]
 
 [[package]]
