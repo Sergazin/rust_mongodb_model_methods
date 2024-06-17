@@ -29,7 +29,10 @@ where
 
     // Implement these methods for your model, that's it!
     fn collection() -> mongodb::Collection<Self>;
+    #[cfg(feature = "oid_as_id")]
     fn id_value(&self) -> &bson::oid::ObjectId;
+    #[cfg(feature = "uuid_as_id")]
+    fn id_value(&self) -> &uuid::Uuid;
 
     // HELPERS =====================================================================================================
     fn search_filter(&self) -> bson::Document {
@@ -59,11 +62,23 @@ where
         Ok(item)
     }
 
+    #[cfg(feature = "oid_as_id")]
     async fn find_by_id(id: &bson::oid::ObjectId) -> Result<Option<Self>, E> {
         Self::find_one(bson::doc! { "_id": id }).await
     }
 
+    #[cfg(feature = "oid_as_id")]
     async fn find_by_id_strict(id: &bson::oid::ObjectId) -> Result<Self, E> {
+        Self::find_one_strict(bson::doc! { "_id": id }).await
+    }
+
+    #[cfg(feature = "uuid_as_id")]
+    async fn find_by_id(id: &uuid::Uuid) -> Result<Option<Self>, E> {
+        Self::find_one(bson::doc! { "_id": id }).await
+    }
+
+    #[cfg(feature = "uuid_as_id")]
+    async fn find_by_id_strict(id: &uuid::Uuid) -> Result<Self, E> {
         Self::find_one_strict(bson::doc! { "_id": id }).await
     }
 
@@ -99,7 +114,13 @@ where
         Self::find_one_strict(filter).await
     }
 
+    #[cfg(feature = "oid_as_id")]
     async fn update_by_id<D: serde::Serialize + Send>(id: &bson::oid::ObjectId, data: D) -> Result<Self, E> {
+        Self::update_one(bson::doc! { "_id": id }, data).await
+    }
+
+    #[cfg(feature = "uuid_as_id")]
+    async fn update_by_id<D: serde::Serialize + Send>(id: &uuid::Uuid, data: D) -> Result<Self, E> {
         Self::update_one(bson::doc! { "_id": id }, data).await
     }
 
@@ -116,8 +137,14 @@ where
         Ok(())
     }
 
+    #[cfg(feature = "oid_as_id")]
     async fn delete_by_id(id: &bson::oid::ObjectId) -> Result<(), E> {
         Self::delete_one(bson::doc! { "_id": id }).await
+    }
+
+    #[cfg(feature = "uuid_as_id")]
+    async fn delete_by_id(id: &uuid::Uuid) -> Result<(), E> {
+        Self::delete_one(bson::doc ! { "_id": id }).await
     }
 
     // Instance Methods

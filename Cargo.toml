@@ -10,3 +10,9 @@ bson = "2.11.0"
 futures = "0.3.30"
 mongodb = "2.8.2"
 serde = "1.0.203"
+uuid = {version="1.8.0",features=["serde"], optional=true}
+
+[features]
+default = ["oid_as_id"]
+oid_as_id = ["bson/objectid"]
+uuid_as_id = ["dep:uuid"]
