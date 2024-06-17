@@ -1,0 +1,12 @@
+[package]
+name = "rust_mongodb_model_methods"
+description = "Rust MongoDB Model Methods"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.80"
+bson = "2.11.0"
+futures = "0.3.30"
+mongodb = "2.8.2"
+serde = "1.0.203"
