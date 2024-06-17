@@ -88,7 +88,13 @@ where
 
         let insert_result = collection.insert_one(data, None).await.map_err(|x| (Error::DBError(x)))?;
 
+        #[cfg(feature = "oid_as_id")]
         let some_id = insert_result.inserted_id.as_object_id();
+        #[cfg(feature = "uuid_as_id")]
+        let some_id: Option<uuid::Uuid> = match insert_result.inserted_id.as_str() {
+            Some(id) => Some(uuid::Uuid::parse_str(id).map_err(|_| Error::CreateFailed)?),
+            None => None,
+        };
 
         match some_id {
             Some(id) => Ok(Self::find_by_id_strict(&id).await?),

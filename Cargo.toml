@@ -13,6 +13,6 @@ serde = "1.0.203"
 uuid = {version="1.8.0",features=["serde"], optional=true}
 
 [features]
-default = []
+default = ["uuid_as_id"]
 oid_as_id = []
 uuid_as_id = ["dep:uuid"]
