@@ -9,6 +9,7 @@
  * cargo add async-trait futures mongodb serde bson
 */
 
+
 use futures::TryStreamExt;
 
 #[derive(Debug)]
@@ -25,7 +26,7 @@ pub enum Error {
 #[cfg(feature = "oid_as_id")]
 type IdType = bson::oid::ObjectId;
 #[cfg(feature = "uuid_as_id")]
-type IdType = uuid::Uuid;
+type IdType = bson::Uuid;
 
 #[async_trait::async_trait]
 pub trait RustMongoDBModelMethods<E>
@@ -38,19 +39,6 @@ where
     fn collection() -> mongodb::Collection<Self>;
     fn id_value(&self) -> &IdType;
 
-    fn id_fitter(id: &IdType) -> bson::Bson {
-        #[cfg(feature = "oid_as_id")]
-        return id;
-        #[cfg(feature = "uuid_as_id")]
-        {
-            let id = bson::Bson::Binary(bson::Binary{
-                subtype:bson::spec::BinarySubtype::Generic,
-                bytes: id.as_bytes().to_vec()
-            });
-
-            return id;
-        }
-    }
 
 
     // HELPERS =====================================================================================================
@@ -59,8 +47,7 @@ where
         bson::doc! { "_id": self.id_value() }
         #[cfg(feature = "uuid_as_id")]
         {
-            let id = Self::id_fitter(self.id_value());
-            bson::doc! { "_id": id }
+            bson::doc! { "_id": self.id_value() }
         }
     }
 
@@ -88,11 +75,11 @@ where
     }
 
     async fn find_by_id(id: &IdType) -> Result<Option<Self>, E> {
-        Self::find_one(bson::doc! { "_id": Self::id_fitter(id) }).await
+        Self::find_one(bson::doc! { "_id": id}).await
     }
     async fn find_by_id_strict(id: &IdType) -> Result<Self, E> {
-        println!("🔑 Finding by ID: {:?}", bson::doc! { "_id": Self::id_fitter(id) });
-        Self::find_one_strict(bson::doc! { "_id": Self::id_fitter(id) }).await
+        println!("🔑 Finding by ID: {:?}", bson::doc! { "_id": id });
+        Self::find_one_strict(bson::doc! { "_id": id }).await
     }
     // CREATE ======================================================================================================
     async fn create_one(data: &Self) -> Result<Self, E> {
@@ -103,14 +90,14 @@ where
         #[cfg(feature = "oid_as_id")]
         let some_id = insert_result.inserted_id.as_object_id();
         #[cfg(feature = "uuid_as_id")]
-        let some_id: Option<uuid::Uuid> = {
-           match insert_result.inserted_id {
-               bson::Bson::Binary(bin) => {
-                   let uuid = uuid::Uuid::from_slice(&bin.bytes).unwrap();
-                   Some(uuid)
-               },
-               _ => None,
-           }
+        let some_id: Option<bson::Uuid> = {
+            match insert_result.inserted_id {
+                bson::Bson::Binary(bson::Binary {
+                    subtype: bson::spec::BinarySubtype::Uuid,
+                    bytes,
+                }) => Some(bson::Uuid::from_uuid_1(uuid::Uuid::from_slice(&bytes).unwrap())),
+                _ => None,
+            }
         };
 
         println!("🔑 Created ID: {:?}", some_id);
@@ -139,7 +126,7 @@ where
     }
 
     async fn update_by_id<D: serde::Serialize + Send>(id: &IdType, data: D) -> Result<Self, E> {
-        Self::update_one(bson::doc! { "_id": Self::id_fitter(id) }, data).await
+        Self::update_one(bson::doc! { "_id": id }, data).await
     }
 
     // DELETE ======================================================================================================
@@ -156,7 +143,7 @@ where
     }
 
     async fn delete_by_id(id: &IdType) -> Result<(), E> {
-        Self::delete_one(bson::doc! { "_id": Self::id_fitter(id) }).await
+        Self::delete_one(bson::doc! { "_id": id }).await
     }
 
     // Instance Methods
